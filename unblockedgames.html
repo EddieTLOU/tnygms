@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tiny games // Unified Arcade Platform</title>
+    
+    <!-- Clean, Premium Modern Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ==========================================================================
+           GLOBAL DESIGN VARIABLES & COLOR PALETTE
+           ========================================================================== */
+        :root {
+            --accent-blue: #0071e3;
+            --accent-blue-hover: #1485ff;
+            --accent-glow: rgba(0, 113, 227, 0.4);
+            --accent-glow-intense: rgba(0, 113, 227, 0.75);
+            
+            --white: #ffffff;
+            --black: #000000;
+            --text-primary: #ffffff;
+            --text-muted: rgba(255, 255, 255, 0.55);
+            --text-disabled: rgba(255, 255, 255, 0.25);
+            
+            --bg-dark-core: #07090e;
+            --bg-dark-ambient: #111827;
+            --panel-bg: rgba(17, 24, 39, 0.75);
+            --panel-bg-hover: rgba(31, 41, 55, 0.85);
+            --panel-border: rgba(255, 255, 255, 0.07);
+            --panel-border-hover: rgba(255, 255, 255, 0.25);
+            
+            --red-alert: #ff3b30;
+            --red-glow: rgba(255, 59, 48, 0.4);
+            --green-success: #34c759;
+            
+            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            
+            --transition-smooth: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --transition-snappy: all 0.15s ease-out;
+            --transition-lazy: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* ==========================================================================
+           RESET & CORE HTML STRUCTURE
+           ========================================================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-dark-core);
+        }
+
+        body {
+            background: radial-gradient(circle at 50% 30%, var(--bg-dark-ambient) 0%, var(--bg-dark-core) 100%);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            display: grid;
+            grid-template-rows: 76px 1fr 44px;
+            position: relative;
+        }
+
+        /* Background Particle Effect Mesh Overlays */
+        body::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 0);
+            background-size: 24px 24px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* ==========================================================================
+           TOP BAR SYSTEM HEADER
+           ========================================================================== */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 48px;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, transparent 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            z-index: 100;
+            position: relative;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .logo-area:hover {
+            opacity: 0.85;
+            transform: translateX(2px);
+        }
+
+        .logo-dot {
+            width: 10px;
+            height: 10px;
+            background: var(--accent-blue);
+            border-radius: 50%;
+            box-shadow: 0 0 14px 4px var(--accent-blue);
+            animation: pulseGlow 3s infinite ease-in-out;
+        }
+
+        .app-title {
+            font-size: 21px;
+            font-weight: 700;
+            letter-spacing: -0.75px;
+            text-transform: lowercase;
+            background: linear-gradient(180deg, var(--white) 0%, rgba(255,255,255,0.75) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .system-meta-layer {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .navigation-tip {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-disabled);
+            background: rgba(255, 255, 255, 0.03);
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+        }
+
+        .clock-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .clock {
+            font-size: 15px;
+            color: var(--white);
+            font-weight: 500;
+            letter-spacing: 0.25px;
+        }
+
+        /* ==========================================================================
+           MAIN CONTENT ARCHITECTURE (ROW + VIEWPORT)
+           ========================================================================== */
+        main {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            padding: 24px 48px 28px 48px;
+            gap: 24px;
+            overflow: hidden;
+            z-index: 10;
+        }
+
+        /* Shelf Row Container Layouts */
+        .shelf-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            animation: slideDownMenu 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .shelf-header-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-left: 4px;
+        }
+
+        .shelf-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            font-weight: 800;
+        }
+
+        .shelf-counter {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-disabled);
+        }
+
+        .shelf-row {
+            display: flex;
+            gap: 18px;
+            overflow-x: auto;
+            padding: 6px 4px 22px 4px;
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+        }
+
+        /* Webkit Scrollbar Styling Customization */
+        .shelf-row::-webkit-scrollbar {
+            height: 5px;
+        }
+        
+        .shelf-row::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .shelf-row::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 100px;
+            transition: var(--transition-smooth);
+        }
+
+        .shelf-row::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* ==========================================================================
+           INTERACTIVE GAME SELECTION TILES (XMB STYLED)
+           ========================================================================== */
+        .game-card {
+            min-width: 136px;
+            max-width: 136px;
+            height: 136px;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 14px;
+            position: relative;
+            transition: var(--transition-smooth);
+            backdrop-filter: blur(8px);
+        }
+
+        .game-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--panel-border-hover);
+            background: var(--panel-bg-hover);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-card:active {
+            transform: translateY(-2px) scale(0.98);
+        }
+
+        .game-card.selected {
+            border-color: var(--accent-blue);
+            background: linear-gradient(135deg, rgba(0, 113, 227, 0.22) 0%, rgba(7, 9, 14, 0.6) 100%);
+            box-shadow: 0 0 0 1px var(--accent-blue), 0 12px 30px var(--accent-glow);
+            transform: scale(1.05) translateY(-5px);
+        }
+
+        .game-thumb {
+            width: 68px;
+            height: 68px;
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: var(--transition-smooth);
+        }
+
+        .game-card.selected .game-thumb {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: scale(1.02);
+        }
+
+        .game-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .game-title {
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: rgba(255, 255, 255, 0.9);
+            transition: var(--transition-smooth);
+            letter-spacing: -0.1px;
+        }
+
+        .game-card.selected .game-title {
+            color: var(--white);
+        }
+
+        /* Active verification small visual dot icon indicators */
+        .status-node-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--text-disabled);
+        }
+        
+        .game-card.has-link .status-node-indicator {
+            background: var(--green-success);
+            box-shadow: 0 0 8px var(--green-success);
+        }
+
+        /* ==========================================================================
+           MAIN ACTIVE EMBED VIEWPORT STYLING
+           ========================================================================== */
+        .viewport {
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.8), 0 20px 50px rgba(0,0,0,0.4);
+            animation: scaleUpViewport 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Static Dashboard Screen Placeholder Overlays */
+        .placeholder {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            z-index: 10;
+            text-align: center;
+            padding: 40px;
+            transition: var(--transition-smooth);
+        }
+
+        .placeholder-artwork {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.15;
+            color: var(--white);
+            transition: var(--transition-smooth);
+        }
+        
+        .game-selected-state .placeholder-artwork {
+            opacity: 0.85;
+            transform: scale(1.05);
+            filter: drop-shadow(0 10px 20px var(--accent-glow));
+        }
+
+        .placeholder h2 {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 10px;
+            max-width: 600px;
+            line-height: 1.25;
+        }
+
+        .placeholder p {
+            color: var(--text-muted);
+            font-size: 14px;
+            max-width: 500px;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+
+        /* System Canvas Launch Button Interface */
+        .launch-btn {
+            background: var(--white);
+            color: var(--bg-dark-core);
+            border: none;
+            padding: 14px 44px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: -0.1px;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            transition: var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .launch-btn:hover {
+            transform: scale(1.04) translateY(-2px);
+            box-shadow: 0 15px 30px rgba(255, 255, 255, 0.25);
+            background: var(--white);
+        }
+
+        .launch-btn:active {
+            transform: scale(0.98) translateY(0);
+        }
+        
+        .launch-btn.missing-config {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-muted);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .launch-btn.missing-config:hover {
+            transform: none;
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: none;
+        }
+
+        /* ==========================================================================
+           FLOATING RUNTIME HEADS-UP-DISPLAY CONTROLS LAYER
+           ========================================================================== */
+        .hud {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            z-index: 40;
+            display: flex;
+            gap: 14px;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-10px);
+            transition: var(--transition-smooth);
+        }
+
+        .hud.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .hud-btn {
+            background: rgba(13, 18, 30, 0.82);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: var(--white);
+            padding: 11px 22px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(14px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            transition: var(--transition-snappy);
+        }
+
+        .hud-btn svg {
+            transition: var(--transition-snappy);
+        }
+
+        .hud-btn:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(20, 30, 50, 0.9);
+            transform: translateY(-2px);
+        }
+        
+        .hud-btn:active {
+            transform: translateY(0);
+        }
+
+        .hud-btn.btn-fullscreen-active {
+            border-color: var(--accent-blue);
+            background: var(--accent-blue);
+        }
+
+        .hud-btn.stop:hover {
+            border-color: var(--red-alert);
+            background: var(--red-alert);
+            box-shadow: 0 8px 20px var(--red-glow);
+        }
+
+        /* ==========================================================================
+           LIVE CORE SANDBOX IFRAME CONTAINER
+           ========================================================================== */
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: var(--black);
+            z-index: 5;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        iframe.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .hide-node {
+            display: none !important;
+        }
+
+        /* ==========================================================================
+           SYSTEM FOOTER BAR DATA LOGGER STATUS PANEL
+           ========================================================================== */
+        footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 48px;
+            font-size: 12px;
+            color: var(--text-muted);
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.4) 0%, transparent 100%);
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+            font-family: var(--font-mono);
+            z-index: 100;
+        }
+
+        .footer-left-log {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: -0.1px;
+        }
+
+        .log-spinner {
+            width: 6px;
+            height: 6px;
+            background: var(--green-success);
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .log-spinner.loading {
+            background: var(--accent-blue);
+            animation: pulseGlow 1s infinite alternate;
+        }
+
+        .footer-right-signature {
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            font-size: 10px;
+            opacity: 0.7;
+        }
+
+        /* ==========================================================================
+           KEYFRAME SYSTEM ANIMATIONS
+           ========================================================================== */
+        @keyframes pulseGlow {
+            0% { transform: scale(1); opacity: 0.9; box-shadow: 0 0 10px 2px var(--accent-blue); }
+            50% { transform: scale(1.15); opacity: 1; box-shadow: 0 0 18px 6px var(--accent-blue); }
+            100% { transform: scale(1); opacity: 0.9; box-shadow: 0 0 10px 2px var(--accent-blue); }
+        }
+
+        @keyframes slideDownMenu {
+            0% { transform: translateY(-15px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes scaleUpViewport {
+            0% { transform: scale(0.98); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Fullscreen Viewport Mode Adjustments Styles */
+        :-webkit-full-screen .viewport {
+            border-radius: 0 !important;
+            border: none !important;
+        }
+        
+        ::backdrop {
+            background-color: var(--bg-dark-core);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SYSTEM LAYER GLOBAL TOP BAR -->
+    <header>
+        <div class="logo-area" id="action-brand-home-reset" title="Return to Dashboard Home Menu">
+            <div class="logo-dot"></div>
+            <span class="app-title">tiny games</span>
+        </div>
+        <div class="system-meta-layer">
+            <div class="navigation-tip">↕↕ Use Mouse Scroll / Arrows to Navigate Row</div>
+            <div class="clock-container">
+                <span class="clock" id="node-runtime-clock">00:00:00 AM</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- CORE RECONSTRUCTED RUNTIME ENGINE HUB CONTAINER -->
+    <main>
+        <!-- HORIZONTAL CAROUSEL COMPONENT SYSTEM -->
+        <div class="shelf-container">
+            <div class="shelf-header-wrapper">
+                <div class="shelf-label">Find All Games</div>
+                <div class="shelf-counter" id="shelf-ui-counter">0 / 0 Titles Loaded</div>
+            </div>
+            <div class="shelf-row" id="shelf-scroller-track">
+                <!-- Programmatically generated list targets mapped live by JS initialization loops -->
+            </div>
+        </div>
+
+        <!-- TARGET DISPATCH GRAPHICAL CANVAS VIEWPORT WINDOW -->
+        <section class="viewport" id="application-render-container">
+            
+            <!-- OVERLAY CONSOLE RUNTIME CONTROLS HUD -->
+            <div class="hud" id="floating-viewport-hud">
+                <button class="hud-btn" id="action-trigger-fullscreen" title="Toggle Fullscreen Canvas Engine">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                    <span>Fullscreen</span>
+                </button>
+                <button class="hud-btn stop" id="action-trigger-stop" title="Kill App Processes and Purge Frame Target">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>
+                    <span>Stop Game</span>
+                </button>
+            </div>
+
+            <!-- HOMEPAGE BASE STATE MENU INTERFACE SCREEN overlays -->
+            <div class="placeholder" id="viewport-menu-overlay">
+                <!-- SVG Game Controller Logo Display Graphics Dynamic Nodes -->
+                <div class="placeholder-artwork" id="vector-artwork-container">
+                    <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><path d="M18.32 15.66A10 10 0 0 1 3.26 6.13a2 2 0 0 1 1.73-1.13h14a2 2 0 0 1 1.73 1.13 10 10 0 0 1-2.4 10.53Z"/><path d="M8 18v2a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2"/></svg>
+                </div>
+                <h2 id="display-header-title">Select a game to start playing</h2>
+                <p id="display-subtext-description">Pick any title from your horizontal menu row above to initialize configuration variables.</p>
+                <button class="launch-btn" id="action-trigger-launch" style="display: none;">
+                    <span>Launch Game Frame</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                </button>
+            </div>
+
+            <!-- ENGINE SANDBOX LIVE SECURE TARGET MONITOR ENVIRONMENT IFRAME LAYER -->
+            <iframe id="sandbox-application-iframe" sandbox="allow-scripts opacity allow-same-origin allow-pointer-lock allow-forms allow-popups" allow="autoplay; gamepad; keyboard; fullscreen; clipboard-read; clipboard-write"></iframe>
+
+        </section>
+    </main>
+
+    <!-- METRICS LOGGER BAR STAGING METRICS -->
+    <footer>
+        <div class="footer-left-log">
+            <span class="log-spinner" id="log-status-node"></span>
+            <span id="footer-console-output-log">System Environment: Initialization Sequence Completed // Ready.</span>
+        </div>
+        <div class="footer-right-signature">tiny games distribution dashboard v4.1.0</div>
+    </footer>
+
+    <!-- ==========================================================================
+       ROBUST SYSTEM JAVASCRIPT CONTROLLER ARCHITECTURE
+       ========================================================================== -->
+    <script>
+        (function() {
+            "use strict";
+
+            /* ==========================================================================
+               CONFIGURABLE LOCAL ARTIFACTS DATABASE STORES
+               PASTE YOUR CUSTOM SOURCE URL LINKS AND COVER LOGOS DIRECTLY WITHIN THIS BLOC.
+               ========================================================================== */
+            const databaseRegistry = {
+                smashkarts: {
+                    title: "Smash Karts",
+                    logo: "https://sports-games.io/cache/data/image/game/smash-karts-f204x204.webp",
+                    link: "https://gameunblocked-2025.github.io/projects/smash-karts/index.html"
+                },
+                geometrydash: {
+                    title: "Geometry – light",
+                    logo: "https://play-lh.googleusercontent.com/p7kWbWBFxQIrzolEqiV5uSvctLeyssZvBV7UBOX29wzZI52IdcSs4qCB_zsQJL1mt9A",
+                    link: "https://rawcdn.githack.com/genizy/google-class/main/gdlite/index.html"
+                },
+                fruitninja: {
+                    title: "Fruit Ninja",
+                    logo: "https://play-lh.googleusercontent.com/Co69f_5vU9Yw_H6S0as_X_N8Uo63_k73oY6U5U9y7pC9bT_zS6Z-zZ3yR-zU3Y7z_A=w240-h240",
+                    link: "https://cdn.jsdelivr.net/gh/genizy/UGS-Assets@main/fruit%20ninja/index.html"
+                },
+                granny: {
+                    title: "Granny",
+                    logo: "https://play-lh.googleusercontent.com/6jC9as-Fv7npxM60atf9E3N688zN96Zg_mH7XpZ8uK0gTz5U1W0DqZp8_f7-0G3LQA=w240-h240", 
+                    link: "" // Paste Custom Granny Frame Link URL here 
+                },
+                fnaf: {
+                    title: "Five Nights at Freddy's",
+                    logo: "https://play-lh.googleusercontent.com/w8N6M7w8S_J42A39VwZ2wU1S6U1m4bT_uO8A7cR5Z6U9WzS6Z-zZ3yR-zU3Y7z_A=w240-h240", 
+                    link: "" // Paste Custom FNAF Frame Link URL here 
+                },
+                happywheels: {
+                    title: "Happy Wheels",
+                    logo: "https://play-lh.googleusercontent.com/69f_5vU9Yw_H6S0as_X_N8Uo63_k73oY6U5U9y7pC9bT_zS6Z-zZ3yR-zU3Y7z_A=w240-h240", 
+                    link: "" // Paste Custom Happy Wheels Frame Link URL here 
+                },
+                tinyfishing: {
+                    title: "Tiny Fishing",
+                    logo: "https://play-lh.googleusercontent.com/9w_H6S0as_X_N8Uo63_k73oY6U5U9y7pC9bT_zS6Z-zZ3yR-zU3Y7z_A=w240-h240", 
+                    link: "" // Paste Custom Tiny Fishing Frame Link URL here 
+                },
+                crossyroad: {
+                    title: "Crossy Road",
+                    logo: "https://play-lh.googleusercontent.com/w_H6S0as_X_N8Uo63_k73oY6U5U9y7pC9bT_zS6Z-zZ3yR-zU3Y7z_A=w240-h240", 
+                    link: "" // Paste Custom Crossy Road Frame Link URL here 
+                },
+                aquapark: {
+                    title: "Aquapark.io",
+                    logo: "https://play-lh.googleusercontent.com/H6S0as_X_N8Uo63_k73oY6U5U9y7pC9bT_zS6Z-zZ3yR-zU3Y7z_A=w240-h240", 
+                    link: "" // Paste Custom Aquapark Frame Link URL here 
+                },
+                basketball: {
+                    title: "Basketball Superstars",
+                    logo: "https://play-lh.googleusercontent.com/U8Uo63_k73oY6U5U9y7pC9bT_zS6Z-zZ3yR-zU3Y7z_A=w240-h240", 
+                    link: "" // Paste Custom Basketball Superstars Frame Link URL here 
+                },
+                notmyneighbor: {
+                    title: "That's Not My Neighbor",
+                    logo: "https://play-lh.googleusercontent.com/73oY6U5U9y7pC9bT_zS6Z-zZ3yR-zU3Y7z_A=w240-h240", 
+                    link: "" // Paste Custom That's Not My Neighbor Frame Link URL here 
+                },
+                scaryteacher: {
+                    title: "Scary Teacher 3D",
+                    logo: "https://play-lh.googleusercontent.com/Z6Z-zZ3yR-zU3Y7z_A=w240-h240", 
+                    link: "" // Paste Custom Scary Teacher Frame Link URL here 
+                }
+            };
+
+            /* ==========================================================================
+               GLOBAL ENGINE STATE CAPTURES
+               ========================================================================== */
+            let activeTargetIndexKey = null;
+            let totalAvailableCount = 0;
+            let loadedValidLinksCount = 0;
+
+            // DOM Object Interface Element References Caching Map
+            const domCache = {
+                track: document.getElementById('shelf-scroller-track'),
+                iframe: document.getElementById('sandbox-application-iframe'),
+                overlay: document.getElementById('viewport-menu-overlay'),
+                launchBtn: document.getElementById('action-trigger-launch'),
+                homeReset: document.getElementById('action-brand-home-reset'),
+                hud: document.getElementById('floating-viewport-hud'),
+                fullscreen: document.getElementById('action-trigger-fullscreen'),
+                stop: document.getElementById('action-trigger-stop'),
+                container: document.getElementById('application-render-container'),
+                consoleLog: document.getElementById('footer-console-output-log'),
+                logNode: document.getElementById('log-status-node'),
+                headerTitle: document.getElementById('display-header-title'),
+                subtextDesc: document.getElementById('display-subtext-description'),
+                clockNode: document.getElementById('node-runtime-clock'),
+                counterNode: document.getElementById('shelf-ui-counter')
+            };
+
+            /* ==========================================================================
+               COMPONENT RENDER INITIALIZATION PIPELINES
+               ========================================================================== */
+            
+            // Build Application Shelf Row Components Dynamically out of Data Array Blocks
+            function initializeCarouselTrack() {
+                domCache.track.innerHTML = "";
+                const dataKeys = Object.keys(databaseRegistry);
+                totalAvailableCount = dataKeys.length;
+                loadedValidLinksCount = 0;
+
+                dataKeys.forEach(key => {
+                    const record = databaseRegistry[key];
+                    const hasValidLink = (record.link && record.link.trim() !== "");
+                    
+                    if (hasValidLink) loadedValidLinksCount++;
+
+                    // Create Node Card Element Wrapper Structure
+                    const card = document.createElement('div');
+                    card.className = `game-card ${hasValidLink ? 'has-link' : 'missing-link'}`;
+                    card.setAttribute('data-registry-key', key);
+                    card.setAttribute('tabindex', '0'); // Allows Keyboard Focus Traps
+
+                    card.innerHTML = `
+                        <div class="status-node-indicator"></div>
+                        <div class="game-thumb">
+                            <img src="${record.logo}" alt="${record.title} Art Module" loading="lazy" onerror="handleImageFallbacks(this);">
+                        </div>
+                        <div class="game-title">${record.title}</div>
+                    `;
+
+                    // Register Event Interface Triggers For Interactive Cards
+                    card.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        dispatchSelectionState(key, card);
+                    });
+
+                    card.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            dispatchSelectionState(key, card);
+                        }
+                    });
+
+                    domCache.track.appendChild(card);
+                });
+
+                // Update Counters UI Layer Interface
+                domCache.counterNode.textContent = `${loadedValidLinksCount} / ${totalAvailableCount} Modules Active`;
+            }
+
+            // Handler fallback icon indicators when asset images break/block
+            window.handleImageFallbacks = function(imageNode) {
+                imageNode.onerror = null; 
+                imageNode.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='1.5'><rect x='2' y='6' width='20' height='12' rx='2'/><path d='M6 12h4m-2-2v4/></svg>";
+            };
+
+            /* ==========================================================================
+               INTERACTIVE EVENT ROUTERS ACTIONS
+               ========================================================================== */
+            
+            // Dispatch App States when choice nodes are selected
+            function dispatchSelectionState(targetKey, cardDOMNode) {
+                // Clear active matching class instances safely
+                const allCurrentCards = domCache.track.querySelectorAll('.game-card');
+                allCurrentCards.forEach(node => node.classList.remove('selected'));
+
+                // Lock Target Configuration References
+                activeTargetIndexKey = targetKey;
+                cardDOMNode.classList.add('selected');
+                
+                // Align smooth center viewport scroll tracks focus points
+                cardDOMNode.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+
+                const chosenRecord = databaseRegistry[targetKey];
+                domCache.headerTitle.textContent = chosenRecord.title;
+                domCache.overlay.classList.add('game-selected-state');
+
+                // Evaluate Link Config Structural States
+                if (!chosenRecord.link || chosenRecord.link.trim() === "") {
+                    domCache.subtextDesc.innerHTML = `<span style="color: var(--red-alert); font-weight: 600;">Configuration Staged:</span> This title has no live iframe url. Paste the source link directly inside your code script parameters array to initialize it.`;
+                    domCache.launchBtn.style.display = 'flex';
+                    domCache.launchBtn.classList.add('missing-config');
+                    domCache.launchBtn.innerHTML = `<span>Awaiting Code Link URL...</span>`;
+                    domCache.consoleLog.textContent = `CRITICAL // INDEXED ARTIFACT [${chosenRecord.title.toUpperCase()}] REQUIRES LIVE SOURCE STREAM`;
+                    domCache.logNode.className = "log-spinner";
+                    domCache.logNode.style.background = "var(--red-alert)";
+                } else {
+                    domCache.subtextDesc.textContent = "Configuration successfully validated. Click 'Launch Game Frame' or press Enter to mount the environment instance.";
+                    domCache.launchBtn.style.display = 'flex';
+                    domCache.launchBtn.classList.remove('missing-config');
+                    domCache.launchBtn.innerHTML = `<span>Launch Game Frame</span><svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5'><polygon points='5 3 19 12 5 21 5 3'/></svg>`;
+                    domCache.consoleLog.textContent = `STAGED RUNTIME // MODULE [${chosenRecord.title.toUpperCase()}] ALLOCATIONS VALIDATED // READY FOR BOOT`;
+                    domCache.logNode.className = "log-spinner";
+                    domCache.logNode.style.background = "var(--accent-blue)";
+                }
+            }
+
+            // Fire and Mount Selected Frame Assets onto Sandbox Targets
+            function executeApplicationMount() {
+                if (!activeTargetIndexKey) return;
+                
+                const targetRecord = databaseRegistry[activeTargetIndexKey];
+                if (!targetRecord.link || targetRecord.link.trim() === "") {
+                    domCache.consoleLog.textContent = "EXECUTION BLOCKED // CANNOT MOUNT EMPTY FRAME CONTAINER NODE";
+                    return;
+                }
+
+                // UI Processing Displays Updates
+                domCache.headerTitle.textContent = `Connecting to Asset Streams...`;
+                domCache.subtextDesc.textContent = `Pre-allocating core execution buffers for ${targetRecord.title}. Please hold...`;
+                domCache.launchBtn.style.display = 'none';
+                domCache.logNode.className = "log-spinner loading";
+                
+                // Mount target URL onto sandboxed frame window structures
+                domCache.iframe.src = targetRecord.link;
+
+                // Event Listener catches execution returns when loaded completely
+                domCache.iframe.onload = () => {
+                    domCache.consoleLog.textContent = `TINY GAMES SYSTEM CONSOLE // PROCESS SPARKED SUCCESSFULLY // ACTIVE RUNTIME MODULE: [${targetRecord.title.toUpperCase()}]`;
+                    domCache.logNode.className = "log-spinner";
+                    domCache.logNode.style.background = "var(--green-success)";
+                    
+                    // Toggle visibility layers to drop menu overlay frames
+                    domCache.overlay.classList.add('hide-node');
+                    domCache.iframe.classList.add('active');
+                    domCache.hud.classList.add('active');
+                };
+            }
+
+            // Safe Environment Reset Functionality Loops
+            function dispatchSystemResetHome() {
+                const allCurrentCards = domCache.track.querySelectorAll('.game-card');
+                allCurrentCards.forEach(node => node.classList.remove('selected'));
+                
+                activeTargetIndexKey = null;
+                
+                // Terminate Frame Buffers securely by wiping target references
+                domCache.iframe.classList.remove('active');
+                domCache.iframe.src = "about:blank";
+                
+                // Reset HUD elements states
+                domCache.hud.classList.remove('active');
+                domCache.overlay.classList.remove('hide-node');
+                domCache.overlay.classList.remove('game-selected-state');
+                domCache.launchBtn.style.display = 'none';
+                
+                // Default Base Texts Restorations
+                domCache.headerTitle.textContent = "Select a game to start playing";
+                domCache.subtextDesc.textContent = "Pick any title from your horizontal menu row above to initialize configuration variables.";
+                domCache.consoleLog.textContent = "System Environment: Initialization Sequence Completed // Ready.";
+                domCache.logNode.className = "log-spinner";
+                domCache.logNode.style.background = "var(--green-success)";
+                
+                // Return tracking focus coordinates to start point lines
+                domCache.track.scrollTo({ left: 0, behavior: 'smooth' });
+            }
+
+            /* ==========================================================================
+               FULLSCREEN UTILITY MANAGEMENT METHODS
+               ========================================================================== */
+            function toggleNativeFullscreenMode() {
+                if (!document.fullscreenElement) {
+                    domCache.container.requestFullscreen()
+                        .then(() => {
+                            domCache.fullscreen.classList.add('btn-fullscreen-active');
+                            domCache.consoleLog.textContent = "VIEWPORT INTERFACE DISPLAY // EXTENDED TO FULLSCREEN DISPLAY NODE";
+                        })
+                        .catch(err => {
+                            domCache.consoleLog.textContent = `VIEWPORT ERROR // FULLSCREEN EXECUTION REFUSED: ${err.message}`;
+                        });
+                } else {
+                    document.exitFullscreen();
+                }
+            }
+
+            // Capture Fullscreen Esc Keyboard Drops Syncing Controls States
+            document.addEventListener('fullscreenchange', () => {
+                if (!document.fullscreenElement) {
+                    domCache.fullscreen.classList.remove('btn-fullscreen-active');
+                }
+            });
+
+            /* ==========================================================================
+               GLOBAL LIFE CYCLES SYSTEMS & CLOCK ROUTINES
+               ========================================================================== */
+            function processSystemClockTicks() {
+                const clockDateData = new Date();
+                let hours = clockDateData.getHours();
+                let minutes = clockDateData.getMinutes();
+                let seconds = clockDateData.getSeconds();
+                const designatorAMPM = hours >= 12 ? 'PM' : 'AM';
+                
+                hours = hours % 12;
+                hours = hours ? hours : 12; // Formats zero hour values to 12 representations
+                hours = hours < 10 ? '0' + hours : hours;
+                minutes = minutes < 10 ? '0' + minutes : minutes;
+                seconds = seconds < 10 ? '0' + seconds : seconds;
+                
+                domCache.clockNode.textContent = `${hours}:${minutes}:${seconds} ${designatorAMPM}`;
+            }
+
+            // Wheel Mouse Scrolls Redirector Engine for Horizontal Tracks Interface
+            domCache.track.addEventListener('wheel', (wheelEvent) => {
+                if (wheelEvent.deltaY !== 0) {
+                    wheelEvent.preventDefault();
+                    domCache.track.scrollLeft += (wheelEvent.deltaY * 1.2);
+                }
+            }, { passive: false });
+
+            // Universal UI Bind Registrars Interfacing Mapping Handlers
+            domCache.launchBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                executeApplicationMount();
+            });
+            
+            domCache.fullscreen.addEventListener('click', toggleNativeFullscreenMode);
+            domCache.stop.addEventListener('click', () => {
+                if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                }
+                dispatchSystemResetHome();
+            });
+            
+            domCache.homeReset.addEventListener('click', dispatchSystemResetHome);
+
+            /* ==========================================================================
+               KEYBOARD CORES ACCESSIBILITY TRAVERSAL ENGINE (ARROW NAVIGATION)
+               ========================================================================== */
+            document.addEventListener('keydown', (keyboardEvent) => {
+                // Ignore keyboard traps if iframe handles inputs directly
+                if (document.activeElement.tagName === 'IFRAME') return;
+
+                const registeredKeys = Object.keys(databaseRegistry);
+                let currentFocusIndex = registeredKeys.indexOf(activeTargetIndexKey);
+
+                if (keyboardEvent.key === 'ArrowRight') {
+                    keyboardEvent.preventDefault();
+                    let nextIndex = currentFocusIndex + 1;
+                    if (nextIndex < registeredKeys.length) {
+                        const nextKey = registeredKeys[nextIndex];
+                        const targetDOMElement = domCache.track.querySelector(`[data-registry-key="${nextKey}"]`);
+                        if (targetDOMElement) dispatchSelectionState(nextKey, targetDOMElement);
+                    }
+                } else if (keyboardEvent.key === 'ArrowLeft') {
+                    keyboardEvent.preventDefault();
+                    let prevIndex = currentFocusIndex - 1;
+                    if (prevIndex >= 0) {
+                        const prevKey = registeredKeys[prevIndex];
+                        const targetDOMElement = domCache.track.querySelector(`[data-registry-key="${prevKey}"]`);
+                        if (targetDOMElement) dispatchSelectionState(prevKey, targetDOMElement);
+                    }
+                } else if (keyboardEvent.key === 'Escape' && activeTargetIndexKey !== null) {
+                    keyboardEvent.preventDefault();
+                    dispatchSystemResetHome();
+                }
+            });
+
+            /* ==========================================================================
+               SYSTEM COMPILER ENGINE APPLICATION BOOT ENTRY
+               ========================================================================== */
+            function mainSystemBootstrapEntry() {
+                try {
+                    initializeCarouselTrack();
+                    processSystemClockTicks();
+                    setInterval(processSystemClockTicks, 1000); // High precision real time tracking clock
+                    console.log("Tiny Games Distribution Core Framework Boot Sequence Verified Operational.");
+                } catch(runtimeErrorDiagnostic) {
+                    domCache.consoleLog.textContent = `FATAL EXCEPTION BOOTING SYSTEMS: ${runtimeErrorDiagnostic.message}`;
+                    domCache.logNode.style.background = "var(--red-alert)";
+                }
+            }
+
+            // Launch Core Engine Systems Staging Execution Block Targets
+            document.addEventListener('DOMContentLoaded', mainSystemBootstrapEntry);
+
+        })();
+    </script>
+</body>
+</html>
